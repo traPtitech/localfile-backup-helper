@@ -1,15 +1,26 @@
-// GCP関係の処理をまとめたモジュール
-
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
+
+	"cloud.google.com/go/storage"
+	"google.golang.org/api/option"
 )
+
+func create_client(GCPKey string) *storage.Client {
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(GCPKey))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return client
+}
 
 func create_bucket(distPath string) string {
 	t := time.Now()
@@ -41,6 +52,8 @@ func copy_file(localPath string, distPath string) string {
 			log.Fatal(err)
 		}
 		log.Println("Copied", file.Name())
+		copy.Close()
+		original.Close()
 	}
 	return fmt.Sprintf("%d file(s) successfully copied", len(bu_files))
 }
