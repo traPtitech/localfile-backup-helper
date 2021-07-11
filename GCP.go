@@ -15,6 +15,7 @@ import (
 
 func create_client(GCPKey string) *storage.Client {
 	ctx := context.Background()
+
 	// jsonで渡された鍵のサービスアカウントに紐づけられたクライアントを建てる
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(GCPKey))
 	if err != nil {
@@ -29,12 +30,8 @@ func create_bucket(client storage.Client, projectID string) (*storage.BucketHand
 	t := time.Now()
 	bucketName := fmt.Sprintf("s512_local-%d-%d-%d", t.Year(), t.Month(), t.Day())
 
-	// 10秒経ってもバケットが作成されない(タイムアウト)場合自動的にキャンセルするように設定
+	// バケットとメタデータの設定
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
-
-	// バケット名とメタデータの設定
 	bucket := client.Bucket(bucketName)
 	bucketAtters := &storage.BucketAttrs{
 		StorageClass: "COLDLINE",
@@ -54,10 +51,10 @@ func create_bucket(client storage.Client, projectID string) (*storage.BucketHand
 		log.Fatal(err)
 	}
 
-	return bucket, fmt.Sprintf("Bucket %s successfully created", bucketName)
+	return bucket, fmt.Sprintf("Bucket \"%s\" successfully created", bucketName)
 }
 
-func copy_file(localPath, distPath string) string {
+func copy_file(bucket storage.BucketHandle, localPath string) string {
 	// ローカルのディレクトリ構造を読み込み
 	bu_files, err := ioutil.ReadDir(localPath)
 	if err != nil {
@@ -66,21 +63,25 @@ func copy_file(localPath, distPath string) string {
 
 	// ファイルをストレージにコピー
 	for _, file := range bu_files {
-		copy, err := os.Create(distPath + "/" + file.Name())
-		if err != nil {
-			log.Fatal(err)
-		}
+		// ローカルのファイルを開く
 		original, err := os.Open(localPath + "/" + file.Name())
 		if err != nil {
 			log.Fatal(err)
 		}
-		_, err = io.Copy(copy, original)
+		//書き込むためのWriterを作成
+		ctx := context.Background()
+		writer := bucket.Object(file.Name()).NewWriter(ctx)
+		// 書きこみ
+		_, err = io.Copy(writer, original)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println("Copied", file.Name())
-		copy.Close()
+		// ファイルとWriterを閉じる
 		original.Close()
+		writer.Close()
+
+		log.Println("Copied", file.Name())
 	}
+
 	return fmt.Sprintf("%d file(s) successfully copied", len(bu_files))
 }
