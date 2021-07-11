@@ -43,9 +43,9 @@ func CreateClient() (*storage.Client, error) {
 }
 
 func CreateBucket(client storage.Client) (*storage.BucketHandle, error) {
-	// "s512_local" + バックアップ日時 をバケット名にする
+	// "traq_local" + バックアップ日時 をバケット名にする
 	t := time.Now()
-	bucketName := fmt.Sprintf("s512_local-%d-%d-%d", t.Year(), t.Month(), t.Day())
+	bucketName := fmt.Sprintf("traq_local-%d-%d-%d", t.Year(), t.Month(), t.Day())
 
 	// バケットとメタデータの設定
 	ctx := context.Background()
@@ -72,7 +72,7 @@ func CreateBucket(client storage.Client) (*storage.BucketHandle, error) {
 	return bucket, err
 }
 
-func CopyDirectory(bucket storage.BucketHandle, files []fs.FileInfo) (int, []error) {
+func CopyDirectory(bucket storage.BucketHandle, files []fs.DirEntry) (int, []error) {
 	var errs []error
 	objectNum := 0
 
@@ -89,7 +89,7 @@ func CopyDirectory(bucket storage.BucketHandle, files []fs.FileInfo) (int, []err
 	return objectNum, errs
 }
 
-func copyFile(bucket storage.BucketHandle, file fs.FileInfo) error {
+func copyFile(bucket storage.BucketHandle, file fs.DirEntry) error {
 	// ローカルのファイルを開く
 	original, err := os.Open(localPath + "/" + file.Name())
 	if err != nil {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"modset/pkg/gcp"
 	"modset/pkg/webhook"
@@ -36,9 +35,9 @@ func envLoad() error {
 	return err
 }
 
-func loadDir() ([]fs.FileInfo, error) {
+func loadDir() ([]fs.DirEntry, error) {
 	// ローカルのディレクトリ構造を読み込み
-	files, err := ioutil.ReadDir(localPath)
+	files, err := os.ReadDir(localPath)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,6 @@ func main() {
 	endTime := time.Now()
 	buDuration := endTime.Sub(startTime)
 	mes := webhook.CreateMes(startTime, buDuration, objectNum, errs)
-	log.Print(mes)
 
 	// WebhookをtraQ Webhook Botに送信
 	err = webhook.SendWebhook(mes)
