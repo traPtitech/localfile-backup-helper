@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/golang/snappy"
 	"google.golang.org/api/option"
 )
 
@@ -54,34 +56,40 @@ func create_bucket(client storage.Client, projectID string) (*storage.BucketHand
 	return bucket, fmt.Sprintf("Bucket \"%s\" successfully created", bucketName)
 }
 
-func copy_file(bucket storage.BucketHandle, localPath string) string {
+func copy_directory(bucket storage.BucketHandle, localPath string) string {
 	// ローカルのディレクトリ構造を読み込み
 	bu_files, err := ioutil.ReadDir(localPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// ファイルをストレージにコピー
+	// ファイルを1つずつストレージにコピー
 	for _, file := range bu_files {
-		// ローカルのファイルを開く
-		original, err := os.Open(localPath + "/" + file.Name())
-		if err != nil {
-			log.Fatal(err)
-		}
-		//書き込むためのWriterを作成
-		ctx := context.Background()
-		writer := bucket.Object(file.Name()).NewWriter(ctx)
-		// 書きこみ
-		_, err = io.Copy(writer, original)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// ファイルとWriterを閉じる
-		original.Close()
-		writer.Close()
-
+		copy_file(bucket, file, localPath)
 		log.Println("Copied", file.Name())
 	}
 
 	return fmt.Sprintf("%d file(s) successfully copied", len(bu_files))
+}
+
+func copy_file(bucket storage.BucketHandle, file fs.FileInfo, localPath string) {
+	// ローカルのファイルを開く
+	original, err := os.Open(localPath + "/" + file.Name())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer original.Close()
+
+	//書き込むためのWriterを作成
+	ctx := context.Background()
+	writer := bucket.Object(file.Name()).NewWriter(ctx)
+	snappyWriter := snappy.NewBufferedWriter(writer)
+	defer snappyWriter.Close()
+	defer writer.Close()
+
+	// 書きこみ
+	_, err = io.Copy(snappyWriter, original)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

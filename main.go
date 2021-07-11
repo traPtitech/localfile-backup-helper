@@ -37,7 +37,7 @@ func main() {
 	bucket, mes := create_bucket(*client, projectID)
 	log.Print(mes)
 
-	// バケットへファイルをアップロード
-	mes = copy_file(*bucket, localPath)
+	// バケットへファイルをコピー
+	mes = copy_directory(*bucket, localPath)
 	log.Print(mes)
 }
