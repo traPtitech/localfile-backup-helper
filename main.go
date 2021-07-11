@@ -12,20 +12,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func envLoad() (string, string, string, error) {
+func envLoad() error {
 	// .envファイルを読み込み環境変数とする
 	err := godotenv.Load()
 	if err != nil {
-		return "", "", "", err
+		return err
 	}
 
-	// 環境変数を読み込み
-	localPath := os.Getenv("LOCAL_PATH")
-	gcpKey := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	projectId := os.Getenv("PROJECT_ID")
-
-	log.Print("Env-vars successfully loaded")
-	return localPath, gcpKey, projectId, err
+	log.Print(".env file successfully loaded")
+	return err
 }
 
 func loadDir(localPath string) ([]fs.FileInfo, error) {
@@ -42,10 +37,13 @@ func main() {
 	startTime := time.Now()
 
 	// 環境変数の読み込み
-	localPath, gcpKey, projectId, err := envLoad()
+	err := envLoad()
 	if err != nil {
 		log.Fatal(err)
 	}
+	localPath := os.Getenv("LOCAL_PATH")
+	gcpKey := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	projectId := os.Getenv("PROJECT_ID")
 
 	log.Print("Backin' up files from", localPath, "to", projectId, "on gcp Storage…")
 
