@@ -87,6 +87,6 @@ func main() {
 	// WebhookをtraQ Webhook Botに送信
 	err = webhook.SendWebhook(mes)
 	if err != nil {
-		log.Fatal("Failed to send Webhook: ", err)
+		log.Fatal("Failed to send webhook: ", err)
 	}
 }

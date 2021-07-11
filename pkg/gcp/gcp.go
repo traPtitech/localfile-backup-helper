@@ -30,9 +30,8 @@ func EnvSet() {
 }
 
 func CreateClient() (*storage.Client, error) {
-	ctx := context.Background()
-
 	// jsonで渡された鍵のサービスアカウントに紐づけられたクライアントを建てる
+	ctx := context.Background()
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(gcpKey))
 	if err != nil {
 		return nil, err
@@ -48,7 +47,6 @@ func CreateBucket(client storage.Client) (*storage.BucketHandle, error) {
 	bucketName := fmt.Sprintf("traq_local-%d-%d-%d", t.Year(), t.Month(), t.Day())
 
 	// バケットとメタデータの設定
-	ctx := context.Background()
 	bucket := client.Bucket(bucketName)
 	bucketAtters := &storage.BucketAttrs{
 		StorageClass: "COLDLINE",
@@ -63,6 +61,7 @@ func CreateBucket(client storage.Client) (*storage.BucketHandle, error) {
 	}
 
 	// バケットの作成
+	ctx := context.Background()
 	err := bucket.Create(ctx, projectId, bucketAtters)
 	if err != nil {
 		return nil, err

@@ -1,5 +1,7 @@
 package webhook
 
+// Webhook関連の処理を集めるパッケージ
+
 import (
 	"crypto/hmac"
 	"crypto/sha1"
@@ -68,7 +70,7 @@ func SendWebhook(mes string) error {
 	defer res.Body.Close()
 
 	log.Printf("Sent webhook to traQ Webhook Bot (Status Code: %d, body: %s)", res.StatusCode, body)
-	return nil
+	return err
 }
 
 func calcHMACSHA1(mes string) string {
