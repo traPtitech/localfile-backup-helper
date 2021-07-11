@@ -1,11 +1,12 @@
-package main
+package gcp
+
+// GCPのライブラリを使った処理を集めるパッケージ
 
 import (
 	"context"
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -15,19 +16,20 @@ import (
 	"google.golang.org/api/option"
 )
 
-func create_client(GCPKey string) *storage.Client {
+func CreateClient(gcpKey string, projectId string) (*storage.Client, error) {
 	ctx := context.Background()
 
 	// jsonで渡された鍵のサービスアカウントに紐づけられたクライアントを建てる
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile(GCPKey))
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(gcpKey))
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return client
+	log.Printf("successfully set a client in \"%s\"", projectId)
+	return client, err
 }
 
-func create_bucket(client storage.Client, projectID string) (*storage.BucketHandle, string) {
+func CreateBucket(client storage.Client, projectId string) (*storage.BucketHandle, error) {
 	// "s512_local" + バックアップ日時 をバケット名にする
 	t := time.Now()
 	bucketName := fmt.Sprintf("s512_local-%d-%d-%d", t.Year(), t.Month(), t.Day())
@@ -48,35 +50,37 @@ func create_bucket(client storage.Client, projectID string) (*storage.BucketHand
 	}
 
 	// バケットの作成
-	err := bucket.Create(ctx, projectID, bucketAtters)
+	err := bucket.Create(ctx, projectId, bucketAtters)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return bucket, fmt.Sprintf("Bucket \"%s\" successfully created", bucketName)
+	log.Printf("Bucket \"%s\" successfully created", bucketName)
+	return bucket, err
 }
 
-func copy_directory(bucket storage.BucketHandle, localPath string) string {
-	// ローカルのディレクトリ構造を読み込み
-	bu_files, err := ioutil.ReadDir(localPath)
-	if err != nil {
-		log.Fatal(err)
+func CopyDirectory(bucket storage.BucketHandle, files []fs.FileInfo, localPath string) (int, []error) {
+	var errs []error
+	objectNum := 0
+
+	// 指定のディレクトリのファイルを1つずつストレージにコピー
+	for _, file := range files {
+		err := copyFile(bucket, file, localPath)
+		if err != nil {
+			errs = append(errs, err)
+		} else {
+			objectNum++
+		}
 	}
 
-	// ファイルを1つずつストレージにコピー
-	for _, file := range bu_files {
-		copy_file(bucket, file, localPath)
-		log.Println("Copied", file.Name())
-	}
-
-	return fmt.Sprintf("%d file(s) successfully copied", len(bu_files))
+	return objectNum, errs
 }
 
-func copy_file(bucket storage.BucketHandle, file fs.FileInfo, localPath string) {
+func copyFile(bucket storage.BucketHandle, file fs.FileInfo, localPath string) error {
 	// ローカルのファイルを開く
 	original, err := os.Open(localPath + "/" + file.Name())
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer original.Close()
 
@@ -90,6 +94,8 @@ func copy_file(bucket storage.BucketHandle, file fs.FileInfo, localPath string) 
 	// 書きこみ
 	_, err = io.Copy(snappyWriter, original)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+
+	return err
 }
