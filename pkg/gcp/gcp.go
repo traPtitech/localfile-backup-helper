@@ -16,7 +16,20 @@ import (
 	"google.golang.org/api/option"
 )
 
-func CreateClient(gcpKey string, projectId string) (*storage.Client, error) {
+var (
+	localPath string
+	gcpKey    string
+	projectId string
+)
+
+func EnvSet() {
+	// 環境変数をグローバル変数に代入
+	localPath = os.Getenv("LOCAL_PATH")
+	gcpKey = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	projectId = os.Getenv("PROJECT_ID")
+}
+
+func CreateClient() (*storage.Client, error) {
 	ctx := context.Background()
 
 	// jsonで渡された鍵のサービスアカウントに紐づけられたクライアントを建てる
@@ -29,7 +42,7 @@ func CreateClient(gcpKey string, projectId string) (*storage.Client, error) {
 	return client, err
 }
 
-func CreateBucket(client storage.Client, projectId string) (*storage.BucketHandle, error) {
+func CreateBucket(client storage.Client) (*storage.BucketHandle, error) {
 	// "s512_local" + バックアップ日時 をバケット名にする
 	t := time.Now()
 	bucketName := fmt.Sprintf("s512_local-%d-%d-%d", t.Year(), t.Month(), t.Day())
@@ -59,13 +72,13 @@ func CreateBucket(client storage.Client, projectId string) (*storage.BucketHandl
 	return bucket, err
 }
 
-func CopyDirectory(bucket storage.BucketHandle, files []fs.FileInfo, localPath string) (int, []error) {
+func CopyDirectory(bucket storage.BucketHandle, files []fs.FileInfo) (int, []error) {
 	var errs []error
 	objectNum := 0
 
 	// 指定のディレクトリのファイルを1つずつストレージにコピー
 	for _, file := range files {
-		err := copyFile(bucket, file, localPath)
+		err := copyFile(bucket, file)
 		if err != nil {
 			errs = append(errs, err)
 		} else {
@@ -76,7 +89,7 @@ func CopyDirectory(bucket storage.BucketHandle, files []fs.FileInfo, localPath s
 	return objectNum, errs
 }
 
-func copyFile(bucket storage.BucketHandle, file fs.FileInfo, localPath string) error {
+func copyFile(bucket storage.BucketHandle, file fs.FileInfo) error {
 	// ローカルのファイルを開く
 	original, err := os.Open(localPath + "/" + file.Name())
 	if err != nil {

@@ -12,6 +12,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var (
+	localPath string
+	projectId string
+)
+
 func envLoad() error {
 	// .envファイルを読み込み環境変数とする
 	err := godotenv.Load()
@@ -19,11 +24,19 @@ func envLoad() error {
 		return err
 	}
 
-	log.Print(".env file successfully loaded")
+	// mainで使う環境変数をグローバル変数に代入
+	localPath = os.Getenv("LOCAL_PATH")
+	projectId = os.Getenv("PROJECT_ID")
+
+	// 付属パッケージに環境変数を設定
+	gcp.EnvSet()
+	webhook.EnvSet()
+
+	log.Print("Env-vars successfully loaded")
 	return err
 }
 
-func loadDir(localPath string) ([]fs.FileInfo, error) {
+func loadDir() ([]fs.FileInfo, error) {
 	// ローカルのディレクトリ構造を読み込み
 	files, err := ioutil.ReadDir(localPath)
 	if err != nil {
@@ -39,35 +52,32 @@ func main() {
 	// 環境変数の読み込み
 	err := envLoad()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to load env-vars: ", err)
 	}
-	localPath := os.Getenv("LOCAL_PATH")
-	gcpKey := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	projectId := os.Getenv("PROJECT_ID")
 
 	log.Print("Backin' up files from", localPath, "to", projectId, "on gcp Storage…")
 
 	// クライアントを建てる
-	client, err := gcp.CreateClient(gcpKey, projectId)
+	client, err := gcp.CreateClient()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to load create client: ", err)
 	}
 	defer client.Close()
 
 	// バケットを作成
-	bucket, err := gcp.CreateBucket(*client, projectId)
+	bucket, err := gcp.CreateBucket(*client)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to create bucket: ", err)
 	}
 
 	// ローカルのディレクトリ構造を読み込み
-	files, err := loadDir(localPath)
+	files, err := loadDir()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to load local directory: ", err)
 	}
 
 	// バケットへファイルをコピー
-	objectNum, errs := gcp.CopyDirectory(*bucket, files, localPath)
+	objectNum, errs := gcp.CopyDirectory(*bucket, files)
 	log.Printf("%d file(s) successfully copied, %d error(s) occured", objectNum, len(errs))
 
 	// Webhook用のメッセージを作成
@@ -75,4 +85,10 @@ func main() {
 	buDuration := endTime.Sub(startTime)
 	mes := webhook.CreateMes(startTime, buDuration, objectNum, errs)
 	log.Print(mes)
+
+	// WebhookをtraQ Webhook Botに送信
+	err = webhook.SendWebhook(mes)
+	if err != nil {
+		log.Fatal("Failed to send Webhook: ", err)
+	}
 }
