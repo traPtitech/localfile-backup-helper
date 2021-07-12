@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -17,16 +18,25 @@ import (
 )
 
 var (
-	localPath string
-	gcpKey    string
-	projectId string
+	localPath    string
+	gcpKey       string
+	projectId    string
+	storageClass string
+	duration     int64
 )
 
-func EnvSet() {
+func init() {
 	// 環境変数をグローバル変数に代入
 	localPath = os.Getenv("LOCAL_PATH")
 	gcpKey = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	projectId = os.Getenv("PROJECT_ID")
+	storageClass = os.Getenv("STORAGECLASS")
+	duration, _ = strconv.ParseInt(os.Getenv("DURATION"), 0, 64)
+
+	if localPath == "" || gcpKey == "" || projectId == "" || storageClass == "" || duration == 0 {
+		log.Print("Error: Failed to load env-vars")
+		panic("empty env-var(s) exist")
+	}
 }
 
 func CreateClient() (*storage.Client, error) {
@@ -37,25 +47,25 @@ func CreateClient() (*storage.Client, error) {
 		return nil, err
 	}
 
-	log.Printf("successfully set a client in \"%s\"", projectId)
+	log.Printf("Successfully set a client in \"%s\"", projectId)
 	return client, err
 }
 
 func CreateBucket(client storage.Client) (*storage.BucketHandle, error) {
-	// "traq_local" + バックアップ日時 をバケット名にする
+	// "localfile" + バックアップ日時 をバケット名にする
 	t := time.Now()
-	bucketName := fmt.Sprintf("traq_local-%d-%d-%d", t.Year(), t.Month(), t.Day())
+	bucketName := fmt.Sprintf("localfile-%d-%d-%d", t.Year(), t.Month(), t.Day())
 
 	// バケットとメタデータの設定
 	bucket := client.Bucket(bucketName)
 	bucketAtters := &storage.BucketAttrs{
-		StorageClass: "COLDLINE",
+		StorageClass: storageClass,
 		Location:     "asia-northeast1",
 		// 生成から90日でバケットを削除
 		Lifecycle: storage.Lifecycle{Rules: []storage.LifecycleRule{
 			{
 				Action:    storage.LifecycleAction{Type: "Delete"},
-				Condition: storage.LifecycleCondition{AgeInDays: 90},
+				Condition: storage.LifecycleCondition{AgeInDays: duration},
 			},
 		}},
 	}

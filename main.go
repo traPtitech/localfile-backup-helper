@@ -3,12 +3,11 @@ package main
 import (
 	"io/fs"
 	"log"
-	"modset/pkg/gcp"
-	"modset/pkg/webhook"
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
+	"github.com/traPtitech/localfile-backup-helper/gcp"
+	"github.com/traPtitech/localfile-backup-helper/webhook"
 )
 
 var (
@@ -16,23 +15,15 @@ var (
 	projectId string
 )
 
-func envLoad() error {
-	// .envファイルを読み込み環境変数とする
-	err := godotenv.Load()
-	if err != nil {
-		return err
-	}
-
-	// mainで使う環境変数をグローバル変数に代入
+func init() {
+	// 環境変数をグローバル変数に代入
 	localPath = os.Getenv("LOCAL_PATH")
 	projectId = os.Getenv("PROJECT_ID")
 
-	// 付属パッケージに環境変数を設定
-	gcp.EnvSet()
-	webhook.EnvSet()
-
-	log.Print("Env-vars successfully loaded")
-	return err
+	if localPath == "" || projectId == "" {
+		log.Print("Error: Failed to load env-vars")
+		panic("empty env-var(s) exist")
+	}
 }
 
 func loadDir() ([]fs.DirEntry, error) {
@@ -46,38 +37,39 @@ func loadDir() ([]fs.DirEntry, error) {
 }
 
 func main() {
+	log.Print("Backin' up files from", localPath, "to", projectId, "on gcp Storage...")
 	startTime := time.Now()
-
-	// 環境変数の読み込み
-	err := envLoad()
-	if err != nil {
-		log.Fatal("Failed to load env-vars: ", err)
-	}
-
-	log.Print("Backin' up files from", localPath, "to", projectId, "on gcp Storage…")
 
 	// クライアントを建てる
 	client, err := gcp.CreateClient()
 	if err != nil {
-		log.Fatal("Failed to load create client: ", err)
+		log.Print("Error: Failed to load create client")
+		panic(err)
 	}
 	defer client.Close()
 
 	// バケットを作成
 	bucket, err := gcp.CreateBucket(*client)
 	if err != nil {
-		log.Fatal("Failed to create bucket: ", err)
+		log.Print("Error: Failed to create bucket")
+		panic(err)
 	}
 
 	// ローカルのディレクトリ構造を読み込み
 	files, err := loadDir()
 	if err != nil {
-		log.Fatal("Failed to load local directory: ", err)
+		log.Print("Error: Failed to load local directory")
+		panic(err)
 	}
 
 	// バケットへファイルをコピー
 	objectNum, errs := gcp.CopyDirectory(*bucket, files)
 	log.Printf("%d file(s) successfully copied, %d error(s) occured", objectNum, len(errs))
+	if len(errs) != 0 {
+		for i, err := range errs {
+			log.Printf("Error %d: %s", i, err)
+		}
+	}
 
 	// Webhook用のメッセージを作成
 	endTime := time.Now()
@@ -87,6 +79,7 @@ func main() {
 	// WebhookをtraQ Webhook Botに送信
 	err = webhook.SendWebhook(mes)
 	if err != nil {
-		log.Fatal("Failed to send webhook: ", err)
+		log.Print("Failed to send webhook")
+		panic(err)
 	}
 }

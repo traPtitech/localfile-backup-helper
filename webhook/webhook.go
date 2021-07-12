@@ -20,23 +20,31 @@ const timeFormat = "2006/01/02 15:04:05"
 var (
 	webhookId     string
 	webhookSecret string
+	localPath     string
 )
 
-func EnvSet() {
+func init() {
 	// 環境変数をグローバル変数に代入
+	localPath = os.Getenv("LOCAL_PATH")
 	webhookId = os.Getenv("TRAQ_WEBHOOK_ID")
 	webhookSecret = os.Getenv("TRAQ_WEBHOOK_SECRET")
+
+	if localPath == "" || webhookId == "" || webhookSecret == "" {
+		log.Print("Error: Failed to load env-vars")
+		panic("empty env-var(s) exist")
+	}
 }
 
 func CreateMes(startTime time.Time, buDuration time.Duration, objectNum int, errs []error) string {
 	// traQに流すテキストメッセージを生成
 	mes := fmt.Sprintf(
-		`### traQローカルファイルのバックアップが保存されました
+		`### ローカルファイルのバックアップが保存されました
+	バックアップ元ディレクトリ: %s 
 	バックアップ開始時刻: %s
 	バックアップ所要時間: %f 分
 	オブジェクト数: %d
 	エラー数: %d`,
-		startTime.Format(timeFormat), buDuration.Minutes(), objectNum, len(errs))
+		localPath, startTime.Format(timeFormat), buDuration.Minutes(), objectNum, len(errs))
 
 	log.Print("Webhook message generated")
 	return mes
@@ -60,7 +68,6 @@ func SendWebhook(mes string) error {
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
 
 	// レスポンスの内容を確認
 	body, err := io.ReadAll(res.Body)
