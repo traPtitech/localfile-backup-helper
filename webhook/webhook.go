@@ -1,6 +1,5 @@
-package webhook
-
 // Webhook関連の処理を集めるパッケージ
+package webhook
 
 import (
 	"crypto/hmac"

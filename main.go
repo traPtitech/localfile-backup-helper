@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/fs"
 	"log"
 	"os"
 	"time"
@@ -26,16 +25,6 @@ func init() {
 	}
 }
 
-func loadDir() ([]fs.DirEntry, error) {
-	// ローカルのディレクトリ構造を読み込み
-	files, err := os.ReadDir(localPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return files, err
-}
-
 func main() {
 	log.Print("Backin' up files from", localPath, "to", projectId, "on gcp Storage...")
 	startTime := time.Now()
@@ -55,15 +44,12 @@ func main() {
 		panic(err)
 	}
 
-	// ローカルのディレクトリ構造を読み込み
-	files, err := loadDir()
+	// バケットへファイルをコピー
+	objectNum, err, errs := gcp.CopyDirectory(*bucket)
 	if err != nil {
 		log.Print("Error: Failed to load local directory")
 		panic(err)
 	}
-
-	// バケットへファイルをコピー
-	objectNum, errs := gcp.CopyDirectory(*bucket, files)
 	log.Printf("%d file(s) successfully copied, %d error(s) occured", objectNum, len(errs))
 	if len(errs) != 0 {
 		for i, err := range errs {

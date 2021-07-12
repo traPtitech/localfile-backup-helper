@@ -1,6 +1,5 @@
-package gcp
-
 // GCPのライブラリを使った処理を集めるパッケージ
+package gcp
 
 import (
 	"context"
@@ -81,13 +80,19 @@ func CreateBucket(client storage.Client) (*storage.BucketHandle, error) {
 	return bucket, err
 }
 
-func CopyDirectory(bucket storage.BucketHandle, files []fs.DirEntry) (int, []error) {
+func CopyDirectory(bucket storage.BucketHandle) (int, error, []error) {
 	var errs []error
 	objectNum := 0
 
+	// ローカルのディレクトリ構造を読み込み
+	files, err := os.ReadDir(localPath)
+	if err != nil {
+		return 0, err, errs
+	}
+
 	// 指定のディレクトリのファイルを1つずつストレージにコピー
 	for _, file := range files {
-		err := copyFile(bucket, file)
+		err = copyFile(bucket, file)
 		if err != nil {
 			errs = append(errs, err)
 		} else {
@@ -95,7 +100,7 @@ func CopyDirectory(bucket storage.BucketHandle, files []fs.DirEntry) (int, []err
 		}
 	}
 
-	return objectNum, errs
+	return objectNum, nil, errs
 }
 
 func copyFile(bucket storage.BucketHandle, file fs.DirEntry) error {
