@@ -5,54 +5,21 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
-	"time"
 )
 
-const timeFormat = "2006/01/02 15:04:05"
-
-var (
-	webhookId     string
-	webhookSecret string
-	localPath     string
-)
-
-func init() {
-	// 環境変数をグローバル変数に代入
-	localPath = os.Getenv("LOCAL_PATH")
-	webhookId = os.Getenv("TRAQ_WEBHOOK_ID")
-	webhookSecret = os.Getenv("TRAQ_WEBHOOK_SECRET")
-
-	if localPath == "" || webhookId == "" || webhookSecret == "" {
-		log.Print("Error: Failed to load env-vars")
-		panic("empty env-var(s) exist")
-	}
+type WebhookEnv struct {
+	WebhookId     string
+	WebhookSecret string
 }
 
-func CreateMes(startTime time.Time, buDuration time.Duration, objectNum int, errs []error) string {
-	// traQに流すテキストメッセージを生成
-	mes := fmt.Sprintf(
-		`### ローカルファイルのバックアップが保存されました
-	バックアップ元ディレクトリ: %s 
-	バックアップ開始時刻: %s
-	バックアップ所要時間: %f 分
-	オブジェクト数: %d
-	エラー数: %d`,
-		localPath, startTime.Format(timeFormat), buDuration.Minutes(), objectNum, len(errs))
-
-	log.Print("Webhook message generated")
-	return mes
-}
-
-func SendWebhook(mes string) error {
+func (env *WebhookEnv) SendWebhook(mes string) error {
 	// リクエスト先url生成とメッセージの暗号化
-	webhookUrl := "https://q.trap.jp/api/v3/webhooks/" + webhookId
-	sig := calcHMACSHA1(mes)
+	webhookUrl := "https://q.trap.jp/api/v3/webhooks/" + env.WebhookId
+	sig := env.calcHMACSHA1(mes)
 
 	// リクエスト作成とヘッダーの設定
 	req, err := http.NewRequest("POST", webhookUrl, strings.NewReader(mes))
@@ -79,9 +46,9 @@ func SendWebhook(mes string) error {
 	return err
 }
 
-func calcHMACSHA1(mes string) string {
+func (env *WebhookEnv) calcHMACSHA1(mes string) string {
 	// メッセージをHMAC-SHA1でハッシュ化(Bot Consoleのコピペ)
-	mac := hmac.New(sha1.New, []byte(webhookSecret))
+	mac := hmac.New(sha1.New, []byte(env.WebhookSecret))
 	_, _ = mac.Write([]byte(mes))
 	return hex.EncodeToString(mac.Sum(nil))
 }

@@ -16,6 +16,10 @@
     GCP の、バックアップ先のプロジェクトに紐づけられたサービスアカウントのキー(json ファイル)のパス
   - `PROJECT_ID`  
     バックアップ先のバケットを作成するプロジェクトの id
+  - `BUCKET_NAME`  
+    バックアップ先のバケットの名前  
+    小文字・数字・記号が使えますが大文字が使えません  
+    ( `BUCKET_NAME` + {バックアップ日} ) が実際のバケット名になる
   - `STORAGECLASS`  
     データを格納するバケットのストレージクラス
   - `DURATION`
@@ -38,10 +42,11 @@
 export LOCAL_PATH={path}
 export GOOGLE_APPLICATION_CREDENTIALS={path}
 export PROJECT_ID={project-id}
-export TRAQ_WEBHOOK_ID={webhook-id}
-export TRAQ_WEBHOOK_SECRET={secret}
+export BUCKET_NAME={name}
 export STORAGECLASS={strage-class}
 export DURATION={duration}
+export TRAQ_WEBHOOK_ID={webhook-id}
+export TRAQ_WEBHOOK_SECRET={secret}
 
 go run main.go
 ```
