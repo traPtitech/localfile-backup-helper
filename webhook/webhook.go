@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// パッケージを管理する構造体の定義
+// パッケージを表す構造体の定義
 type WebhookStruct struct {
 	WebhookId     string
 	WebhookSecret string

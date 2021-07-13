@@ -13,14 +13,14 @@ import (
 
 const timeFormat = "2006/01/02 15:04:05"
 
-// パッケージを管理する構造体の定義
+// パッケージを表す構造体の定義
 type MainStruct struct {
 	LocalPath  string
 	ProjectId  string
 	BucketName string
 }
 
-// 各パッケージを管理する構造体型の変数の定義
+// 各パッケージを表す構造体型の変数の定義
 var (
 	mainStruct    MainStruct
 	gcpStruct     gcp.GcpStruct
@@ -44,7 +44,7 @@ func init() {
 		panic("empty env-var(s) exist")
 	}
 
-	// パッケージを管理する構造体型の変数に、取得した環境変数を代入
+	// 各パッケージを表す構造体型の変数に、取得した環境変数を代入
 	mainStruct = MainStruct{
 		LocalPath:  localPath,
 		ProjectId:  projectId,

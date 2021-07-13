@@ -13,7 +13,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-// パッケージを管理する構造体の定義
+// パッケージを表す構造体の定義
 type GcpStruct struct {
 	LocalPath    string
 	GcpKey       string
