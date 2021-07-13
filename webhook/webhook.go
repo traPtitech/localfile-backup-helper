@@ -11,13 +11,13 @@ import (
 	"strings"
 )
 
-// パッケージを表す構造体の定義
-type WebhookStruct struct {
+// Webhookを扱う構造体の定義
+type Handler struct {
 	WebhookId     string
 	WebhookSecret string
 }
 
-func (env *WebhookStruct) SendWebhook(mes string) error {
+func (env *Handler) SendWebhook(mes string) error {
 	// リクエスト先url生成とメッセージの暗号化
 	webhookUrl := "https://q.trap.jp/api/v3/webhooks/" + env.WebhookId
 	sig := env.calcHMACSHA1(mes)
@@ -47,7 +47,7 @@ func (env *WebhookStruct) SendWebhook(mes string) error {
 	return err
 }
 
-func (env *WebhookStruct) calcHMACSHA1(mes string) string {
+func (env *Handler) calcHMACSHA1(mes string) string {
 	// メッセージをHMAC-SHA1でハッシュ化(Bot Consoleのコピペ)
 	mac := hmac.New(sha1.New, []byte(env.WebhookSecret))
 	_, _ = mac.Write([]byte(mes))

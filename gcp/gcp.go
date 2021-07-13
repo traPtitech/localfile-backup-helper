@@ -13,8 +13,8 @@ import (
 	"google.golang.org/api/option"
 )
 
-// パッケージを表す構造体の定義
-type GcpStruct struct {
+// GCPを扱う構造体の定義
+type Handler struct {
 	LocalPath    string
 	GcpKey       string
 	ProjectId    string
@@ -22,7 +22,7 @@ type GcpStruct struct {
 	Duration     int64
 }
 
-func (env *GcpStruct) CreateClient() (*storage.Client, error) {
+func (env *Handler) CreateClient() (*storage.Client, error) {
 	// jsonで渡された鍵のサービスアカウントに紐づけられたクライアントを建てる
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(env.GcpKey))
@@ -34,7 +34,7 @@ func (env *GcpStruct) CreateClient() (*storage.Client, error) {
 	return client, err
 }
 
-func (env *GcpStruct) CreateBucket(client storage.Client, bucketName string) (*storage.BucketHandle, error) {
+func (env *Handler) CreateBucket(client storage.Client, bucketName string) (*storage.BucketHandle, error) {
 	// バケットとメタデータの設定
 	bucket := client.Bucket(bucketName)
 	bucketAtters := &storage.BucketAttrs{
@@ -60,7 +60,7 @@ func (env *GcpStruct) CreateBucket(client storage.Client, bucketName string) (*s
 	return bucket, err
 }
 
-func (env *GcpStruct) CopyDirectory(bucket storage.BucketHandle) (int, error, []error) {
+func (env *Handler) CopyDirectory(bucket storage.BucketHandle) (int, error, []error) {
 	var errs []error
 	objectNum := 0
 
@@ -83,7 +83,7 @@ func (env *GcpStruct) CopyDirectory(bucket storage.BucketHandle) (int, error, []
 	return objectNum, nil, errs
 }
 
-func (env *GcpStruct) copyFile(bucket storage.BucketHandle, file fs.DirEntry) error {
+func (env *Handler) copyFile(bucket storage.BucketHandle, file fs.DirEntry) error {
 	// ローカルのファイルを開く
 	original, err := os.Open(env.LocalPath + "/" + file.Name())
 	if err != nil {

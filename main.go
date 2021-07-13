@@ -13,18 +13,18 @@ import (
 
 const timeFormat = "2006/01/02 15:04:05"
 
-// パッケージを表す構造体の定義
-type MainStruct struct {
+// mainパッケージで使う環境変数をまとめる構造体の定義
+type MainEnv struct {
 	LocalPath  string
 	ProjectId  string
 	BucketName string
 }
 
-// 各パッケージを表す構造体型の変数の定義
+// 構造体型のグローバル変数を定義
 var (
-	mainStruct    MainStruct
-	gcpStruct     gcp.GcpStruct
-	webhookStruct webhook.WebhookStruct
+	mainEnv        MainEnv
+	gcpHandler     gcp.Handler
+	webhookHandler webhook.Handler
 )
 
 func init() {
@@ -44,31 +44,31 @@ func init() {
 		panic("empty env-var(s) exist")
 	}
 
-	// 各パッケージを表す構造体型の変数に、取得した環境変数を代入
-	mainStruct = MainStruct{
+	// 構造体型のグローバル変数に、取得した環境変数を代入
+	mainEnv = MainEnv{
 		LocalPath:  localPath,
 		ProjectId:  projectId,
 		BucketName: bucketName,
 	}
-	gcpStruct = gcp.GcpStruct{
+	gcpHandler = gcp.Handler{
 		LocalPath:    localPath,
 		GcpKey:       gcpKey,
 		ProjectId:    projectId,
 		StorageClass: storageClass,
 		Duration:     duration,
 	}
-	webhookStruct = webhook.WebhookStruct{
+	webhookHandler = webhook.Handler{
 		WebhookId:     webhookId,
 		WebhookSecret: webhookSecret,
 	}
 }
 
 func main() {
-	log.Print("Backin' up files from", mainStruct.LocalPath, "to", mainStruct.ProjectId, "on gcp Storage...")
+	log.Print("Backin' up files from", mainEnv.LocalPath, "to", mainEnv.ProjectId, "on gcp Storage...")
 	startTime := time.Now()
 
 	// クライアントを建てる
-	client, err := gcpStruct.CreateClient()
+	client, err := gcpHandler.CreateClient()
 	if err != nil {
 		log.Print("Error: Failed to load create client")
 		panic(err)
@@ -77,17 +77,17 @@ func main() {
 
 	// bucketName + バックアップ日 をバケット名とする
 	t := &startTime
-	bucketName := fmt.Sprintf("%s-%d-%d-%d", mainStruct.BucketName, t.Year(), t.Month(), t.Day())
+	bucketName := fmt.Sprintf("%s-%d-%d-%d", mainEnv.BucketName, t.Year(), t.Month(), t.Day())
 
 	// バケットを作成
-	bucket, err := gcpStruct.CreateBucket(*client, bucketName)
+	bucket, err := gcpHandler.CreateBucket(*client, bucketName)
 	if err != nil {
 		log.Print("Error: Failed to create bucket")
 		panic(err)
 	}
 
 	// バケットへファイルをコピー
-	objectNum, err, errs := gcpStruct.CopyDirectory(*bucket)
+	objectNum, err, errs := gcpHandler.CopyDirectory(*bucket)
 	if err != nil {
 		log.Print("Error: Failed to load local directory")
 		panic(err)
@@ -102,17 +102,17 @@ func main() {
 	// Webhook用のメッセージを作成
 	endTime := time.Now()
 	buDuration := endTime.Sub(startTime)
-	mes := mainStruct.CreateMes(bucketName, startTime, buDuration, objectNum, len(errs))
+	mes := CreateMes(bucketName, startTime, buDuration, objectNum, len(errs))
 
 	// WebhookをtraQ Webhook Botに送信
-	err = webhookStruct.SendWebhook(mes)
+	err = webhookHandler.SendWebhook(mes)
 	if err != nil {
 		log.Print("Failed to send webhook")
 		panic(err)
 	}
 }
 
-func (env *MainStruct) CreateMes(bucketName string, startTime time.Time, buDuration time.Duration, objectNum int, errs_num int) string {
+func CreateMes(bucketName string, startTime time.Time, buDuration time.Duration, objectNum int, errs_num int) string {
 	// traQに流すテキストメッセージを生成
 	mes := fmt.Sprintf(
 		`### ローカルファイルのバックアップが保存されました
@@ -122,7 +122,7 @@ func (env *MainStruct) CreateMes(bucketName string, startTime time.Time, buDurat
 	バックアップ所要時間: %f 分
 	オブジェクト数: %d
 	エラー数: %d`,
-		env.LocalPath, bucketName, startTime.Format(timeFormat), buDuration.Minutes(), objectNum, errs_num)
+		mainEnv.LocalPath, bucketName, startTime.Format(timeFormat), buDuration.Minutes(), objectNum, errs_num)
 
 	log.Print("Webhook message generated")
 	return mes
