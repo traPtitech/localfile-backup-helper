@@ -81,15 +81,32 @@ func copyFile(bucket storage.BucketHandle, file fs.DirEntry) error {
 	}
 	defer original.Close()
 
-	//書き込むためのWriterを作成
+	// 書き込むためのWriterを作成
 	ctx := context.Background()
 	writer := bucket.Object(file.Name()).NewWriter(ctx)
 	snappyWriter := snappy.NewBufferedWriter(writer)
 	defer snappyWriter.Close()
 	defer writer.Close()
 
-	// 書きこみ
-	_, err = io.Copy(snappyWriter, original)
+	// 並列処理のためのパイプリーダー・ライターを定義
+	pr, pw := io.Pipe()
+
+	// 元のファイルをパイプライターに書き込み(パイプリーダーからGCP上ファイルへのコピーとの並行処理)
+	errChan := make(chan error, 1)
+	go func() {
+		_, err := io.Copy(pw, original)
+		defer pw.Close()
+		errChan <- err
+	}()
+
+	// パイプリーダーを読んでGCP上のファイルに書きこみ
+	_, err = io.Copy(snappyWriter, pr)
+	if err != nil {
+		return err
+	}
+	defer pr.Close()
+
+	err = <-errChan
 	if err != nil {
 		return err
 	}
