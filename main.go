@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// 環境変数をグローバル変数としてを定義
+// 環境変数をグローバル変数として定義
 var (
 	localPath     string
 	gcpKey        string
