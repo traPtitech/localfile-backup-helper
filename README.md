@@ -20,9 +20,9 @@
     バックアップ先のバケットの名前  
     小文字・数字・記号が使えますが大文字が使えません  
     ( `BUCKET_NAME` + {バックアップ日} ) が実際のバケット名になる
-  - `STORAGECLASS`  
+  - `storageClass`  
     データを格納するバケットのストレージクラス
-  - `DURATION`
+  - `duration`
     データを格納する期間 (日数指定)
 - traQ Webhook Bot 関連
   - `TRAQ_WEBHOOK_ID`  
@@ -43,10 +43,10 @@ export LOCAL_PATH={path}
 export GOOGLE_APPLICATION_CREDENTIALS={path}
 export PROJECT_ID={project-id}
 export BUCKET_NAME={name}
-export STORAGECLASS={strage-class}
-export DURATION={duration}
+export storageClass={strage-class}
+export duration={duration}
 export TRAQ_WEBHOOK_ID={webhook-id}
 export TRAQ_WEBHOOK_SECRET={secret}
 
-go run main.go
+go run *.go
 ```
