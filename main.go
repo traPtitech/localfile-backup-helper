@@ -17,13 +17,12 @@ func init() {
 		log.Printf("Error: env-var(s) %s empty", strings.Join(emptyVars, ", "))
 		panic("empty env-var(s) exist")
 	}
+
+	log.Print("Env-vars successfully loaded")
 }
 
 func main() {
-	// メモリー使用量のログを記録
-	// defer profile.Start(profile.MemProfile, profile.ProfilePath("./prof"), profile.NoShutdownHook).Stop()
-
-	log.Print("Backin' up files from", localPath, "to", projectId, "on gcp Storage...")
+	log.Printf("Backin' up files from \"%s\" to \"%s\" on gcp Storage...", localPath, projectId)
 	startTime := time.Now()
 
 	// クライアントを建てる
@@ -45,7 +44,7 @@ func main() {
 		panic(err)
 	}
 
-	// バケットへファイルをコピー
+	// バケットへディレクトリをコピー
 	objectNum, err, errs := CopyDirectory(*bucket)
 	if err != nil {
 		log.Print("Error: Failed to load local directory")
