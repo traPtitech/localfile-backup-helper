@@ -85,8 +85,8 @@ func copyFile(bucket storage.BucketHandle, file fs.DirEntry) error {
 	ctx := context.Background()
 	writer := bucket.Object(file.Name()).NewWriter(ctx)
 	snappyWriter := snappy.NewBufferedWriter(writer)
-	defer snappyWriter.Close()
 	defer writer.Close()
+	defer snappyWriter.Close()
 
 	// GCP上のオブジェクトに書きこみ
 	_, err = io.Copy(snappyWriter, original)
