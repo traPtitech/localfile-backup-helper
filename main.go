@@ -3,20 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
-	"strings"
 	"time"
 )
 
 func init() {
 	// 環境変数を取得
 	EnvVarLoad()
-
-	// 環境変数がどれか一つでも空だったらエラーを吐いて終了
-	emptyVars := EnvVarEmptyCheck()
-	if len(emptyVars) != 0 {
-		log.Printf("Error: env-var(s) %s empty", strings.Join(emptyVars, ", "))
-		panic("empty env-var(s) exist")
-	}
 
 	log.Print("Env-vars successfully loaded")
 }

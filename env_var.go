@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"strconv"
 )
@@ -19,43 +20,23 @@ var (
 
 func EnvVarLoad() {
 	// 環境変数を取得
-	localPath = os.Getenv("LOCAL_PATH")
-	gcpKey = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	projectId = os.Getenv("PROJECT_ID")
-	bucketName = os.Getenv("BUCKET_NAME")
-	storageClass = os.Getenv("STORAGE_CLASS")
-	duration, _ = strconv.ParseInt(os.Getenv("DURATION"), 0, 64)
-	webhookId = os.Getenv("TRAQ_WEBHOOK_ID")
-	webhookSecret = os.Getenv("TRAQ_WEBHOOK_SECRET")
+	localPath = getEnv("LOCAL_PATH")
+	gcpKey = getEnv("GOOGLE_APPLICATION_CREDENTIALS")
+	projectId = getEnv("PROJECT_ID")
+	bucketName = getEnv("BUCKET_NAME")
+	storageClass = getEnv("STORAGE_CLASS")
+	duration, _ = strconv.ParseInt(getEnv("DURATION"), 0, 64)
+	webhookId = getEnv("TRAQ_WEBHOOK_ID")
+	webhookSecret = getEnv("TRAQ_WEBHOOK_SECRET")
 }
 
-func EnvVarEmptyCheck() []string {
-	// 空の環境変数を全て入れたスライスを作成
-	emptyVars := []string{}
-	if localPath == "" {
-		emptyVars = append(emptyVars, "LOCAL_PATH")
-	}
-	if gcpKey == "" {
-		emptyVars = append(emptyVars, "GOOGLE_APPLICATION_CREDENTIALS")
-	}
-	if projectId == "" {
-		emptyVars = append(emptyVars, "PROJECT_ID")
-	}
-	if bucketName == "" {
-		emptyVars = append(emptyVars, "BUCKET_NAME")
-	}
-	if storageClass == "" {
-		emptyVars = append(emptyVars, "STORAGE_CLASS")
-	}
-	if duration == 0 {
-		emptyVars = append(emptyVars, "DURATION")
-	}
-	if webhookId == "" {
-		emptyVars = append(emptyVars, "TRAQ_WEBHOOK_ID")
-	}
-	if webhookSecret == "" {
-		emptyVars = append(emptyVars, "TRAQ_WEBHOOK_SECRET")
+func getEnv(name string) string {
+	// 指定された名前の環境変数を取得、空ならばエラーを吐いて終了
+	loadedVar := os.Getenv(name)
+	if loadedVar == "" {
+		log.Printf("Error: env-var \"%s\" empty", name)
+		panic("empty env-var exists")
 	}
 
-	return emptyVars
+	return loadedVar
 }

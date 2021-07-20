@@ -7,9 +7,8 @@ require (
 	cloud.google.com/go/storage v1.16.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/net v0.0.0-20210716203947-853a461950ff // indirect
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
-	golang.org/x/tools v0.1.5 // indirect
 	google.golang.org/api v0.50.0
-	google.golang.org/genproto v0.0.0-20210715145939-324b959e9c22 // indirect
+	google.golang.org/genproto v0.0.0-20210719143636-1d5a45f8e492 // indirect
 )
