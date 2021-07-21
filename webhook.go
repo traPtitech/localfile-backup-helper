@@ -14,7 +14,7 @@ import (
 
 const timeFormat = "2006/01/02 15:04:05"
 
-func CreateMes(bucketName string, startTime time.Time, buduration time.Duration, objectNum int, errs_num int) string {
+func CreateMes(localPath string, bucketName string, startTime time.Time, buduration time.Duration, objectNum int, errs_num int) string {
 	// traQに流すテキストメッセージを生成
 	mes := fmt.Sprintf(
 		`### ローカルファイルのバックアップが保存されました
@@ -30,10 +30,10 @@ func CreateMes(bucketName string, startTime time.Time, buduration time.Duration,
 	return mes
 }
 
-func SendWebhook(mes string) error {
+func SendWebhook(mes string, webhookId string, webhookSecret string) error {
 	// リクエスト先url生成とメッセージの暗号化
 	webhookUrl := "https://q.trap.jp/api/v3/webhooks/" + webhookId
-	sig := calcHMACSHA1(mes)
+	sig := calcHMACSHA1(mes, webhookSecret)
 
 	// リクエスト作成とヘッダーの設定
 	req, err := http.NewRequest("POST", webhookUrl, strings.NewReader(mes))
@@ -60,7 +60,7 @@ func SendWebhook(mes string) error {
 	return err
 }
 
-func calcHMACSHA1(mes string) string {
+func calcHMACSHA1(mes string, webhookSecret string) string {
 	// メッセージをHMAC-SHA1でハッシュ化(Bot Consoleのコピペ)
 	mac := hmac.New(sha1.New, []byte(webhookSecret))
 	_, _ = mac.Write([]byte(mes))

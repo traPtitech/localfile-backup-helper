@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io"
-	"io/fs"
 	"log"
 	"os"
 
@@ -12,7 +11,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func CreateClient() (*storage.Client, error) {
+func CreateClient(gcpKey string, projectId string) (*storage.Client, error) {
 	// jsonで渡された鍵のサービスアカウントに紐づけられたクライアントを建てる
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(gcpKey))
@@ -24,7 +23,7 @@ func CreateClient() (*storage.Client, error) {
 	return client, err
 }
 
-func CreateBucket(client storage.Client, bucketName string) (*storage.BucketHandle, error) {
+func CreateBucket(client storage.Client, projectId string, storageClass string, duration int64, bucketName string) (*storage.BucketHandle, error) {
 	// バケットとメタデータの設定
 	bucket := client.Bucket(bucketName)
 	bucketAtters := &storage.BucketAttrs{
@@ -50,7 +49,7 @@ func CreateBucket(client storage.Client, bucketName string) (*storage.BucketHand
 	return bucket, err
 }
 
-func CopyDirectory(bucket storage.BucketHandle) (int, error, []error) {
+func CopyDirectory(bucket storage.BucketHandle, localPath string) (int, error, []error) {
 	var errs []error
 	objectNum := 0
 
@@ -62,7 +61,7 @@ func CopyDirectory(bucket storage.BucketHandle) (int, error, []error) {
 
 	// 指定のディレクトリのファイルを1つずつストレージにコピー
 	for _, file := range files {
-		err = copyFile(bucket, file)
+		err = copyFile(bucket, localPath+"/"+file.Name(), file.Name())
 		if err != nil {
 			errs = append(errs, err)
 		} else {
@@ -73,9 +72,9 @@ func CopyDirectory(bucket storage.BucketHandle) (int, error, []error) {
 	return objectNum, nil, errs
 }
 
-func copyFile(bucket storage.BucketHandle, file fs.DirEntry) error {
+func copyFile(bucket storage.BucketHandle, filePath string, fileName string) error {
 	// ローカルのファイルを開く
-	original, err := os.Open(localPath + "/" + file.Name())
+	original, err := os.Open(filePath)
 	if err != nil {
 		return err
 	}
@@ -83,7 +82,7 @@ func copyFile(bucket storage.BucketHandle, file fs.DirEntry) error {
 
 	// 書き込むためのWriterを作成
 	ctx := context.Background()
-	writer := bucket.Object(file.Name()).NewWriter(ctx)
+	writer := bucket.Object(fileName).NewWriter(ctx)
 	snappyWriter := snappy.NewBufferedWriter(writer)
 	defer writer.Close()
 	defer snappyWriter.Close()
