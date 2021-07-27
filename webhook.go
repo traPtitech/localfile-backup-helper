@@ -19,7 +19,7 @@ func CreateMes(localPath string, bucketName string, startTime time.Time, budurat
 	mes := fmt.Sprintf(
 		`### ローカルファイルのバックアップが保存されました
 	バックアップ元ディレクトリ: %s 
-	生成されたバケット名: %s
+	生成/上書きされたバケット名: %s
 	バックアップ開始時刻: %s
 	バックアップ所要時間: %f 分
 	オブジェクト数: %d

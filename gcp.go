@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"cloud.google.com/go/storage"
 	"github.com/golang/snappy"
@@ -42,6 +44,10 @@ func CreateBucket(client storage.Client, projectId string, storageClass string, 
 	ctx := context.Background()
 	err := bucket.Create(ctx, projectId, bucketAtters)
 	if err != nil {
+		// バケットが既にある場合のエラー(409: Conflict)を別枠で処理
+		if strings.Contains(err.Error(), "Error 409") {
+			return bucket, errors.New("Error 409")
+		}
 		return nil, err
 	}
 
