@@ -28,7 +28,7 @@ func CreateClient(gcpKey string, projectId string) (*storage.Client, error) {
 func CreateBucket(client storage.Client, projectId string, storageClass string, duration int64, bucketName string) (*storage.BucketHandle, error) {
 	// バケットとメタデータの設定
 	bucket := client.Bucket(bucketName)
-	bucketAtters := &storage.BucketAttrs{
+	bucketAttrs := &storage.BucketAttrs{
 		StorageClass: storageClass,
 		Location:     "asia-northeast1",
 		// 生成から90日でバケットを削除
@@ -42,7 +42,7 @@ func CreateBucket(client storage.Client, projectId string, storageClass string, 
 
 	// バケットの作成
 	ctx := context.Background()
-	err := bucket.Create(ctx, projectId, bucketAtters)
+	err := bucket.Create(ctx, projectId, bucketAttrs)
 	if err != nil {
 		// バケットが既にある場合のエラー(409: Conflict)を別枠で処理
 		if strings.Contains(err.Error(), "Error 409") {
