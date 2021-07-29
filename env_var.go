@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -17,6 +18,8 @@ func EnvVarLoad() (string, string, string, string, string, int64, int, string, s
 	bucketNum, _ := strconv.Atoi(getEnv("BUCKET_NUMBERS"))
 	webhookId := getEnv("TRAQ_WEBHOOK_ID")
 	webhookSecret := getEnv("TRAQ_WEBHOOK_SECRET")
+
+	log.Print("Env-vars successfully loaded")
 	return localPath, gcpKey, projectId, bucketName, storageClass, duration, bucketNum, webhookId, webhookSecret
 }
 
@@ -24,8 +27,7 @@ func getEnv(name string) string {
 	// 指定された名前の環境変数を取得、空ならばエラーを吐いて終了
 	loadedVar := os.Getenv(name)
 	if loadedVar == "" {
-		log.Printf("Error: env-var \"%s\" empty", name)
-		panic("empty env-var exists")
+		panic(fmt.Errorf("Error: env-var \"%s\" empty", name))
 	}
 
 	return loadedVar
