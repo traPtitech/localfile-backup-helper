@@ -27,7 +27,7 @@ func getEnv(name string) string {
 	// 指定された名前の環境変数を取得、空ならばエラーを吐いて終了
 	loadedVar := os.Getenv(name)
 	if loadedVar == "" {
-		panic(fmt.Errorf("Error: env-var \"%s\" empty", name))
+		panic(fmt.Sprintf("Error: env-var \"%s\" empty", name))
 	}
 
 	return loadedVar
