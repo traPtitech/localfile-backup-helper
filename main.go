@@ -23,24 +23,19 @@ func main() {
 	defer client.Close()
 
 	// bucketName + 月(mod n) をバケット名とし、bucketNameに再代入
-	t := &startTime
-	bucketName = fmt.Sprintf("%s-%d", bucketName, t.Month()%time.Month(bucketNum))
+	bucketName = fmt.Sprintf("%s-%d", bucketName, startTime.Month()%time.Month(bucketNum))
 
 	// バケットを作成
 	bucket, err := CreateBucket(*client, projectId, storageClass, duration, bucketName)
 	if err != nil {
-		if err.Error() == "Error 409" {
-			log.Print("Bucket with the same name exists. Objects will be overwritten.")
-		} else {
-			log.Print("Error: failed to create bucket")
-			panic(err)
-		}
+		log.Print("Error: failed to create bucket")
+		panic(err)
 	}
 
 	// バケットへディレクトリをコピー
 	objectNum, err, errs := CopyDirectory(*bucket, localPath)
 	if err != nil {
-		log.Print("Error: failed to load local directory")
+		log.Print("Error: failed to copy directory")
 		panic(err)
 	}
 	log.Printf("%d file(s) successfully backed up, %d error(s) occured", objectNum, len(errs))

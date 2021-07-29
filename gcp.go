@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"io"
 	"log"
 	"os"
@@ -46,9 +45,11 @@ func CreateBucket(client storage.Client, projectId string, storageClass string, 
 	if err != nil {
 		// バケットが既にある場合のエラー(409: Conflict)を別枠で処理
 		if strings.Contains(err.Error(), "Error 409") {
-			return bucket, errors.New("Error 409")
+			log.Print("Bucket with the same name exists. Objects will be overwritten.")
+			return bucket, nil
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
 	log.Printf("Bucket \"%s\" successfully created", bucketName)
