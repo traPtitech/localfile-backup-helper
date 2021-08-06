@@ -49,6 +49,7 @@ export PROJECT_ID={project-id}
 export BUCKET_NAME={name}
 export STORAGE_CLASS={strage-class}
 export DURATION={duration}
+export BUCKET_NUMBERS={bucket-numbers}
 export TRAQ_WEBHOOK_ID={webhook-id}
 export TRAQ_WEBHOOK_SECRET={secret}
 
