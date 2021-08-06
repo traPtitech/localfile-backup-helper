@@ -1,17 +1,56 @@
-# server-backup
+# localfile-backup-helper
 
-tokyotech.org、s512サーバーのtraQローカルファイルのバックアップスクリプト
-
-ローカルからデータを抜いてGCP Storageにバックアップします。
+ローカルファイルのバックアップ用スクリプト  
+ローカルストレージ上の任意のフラットなディレクトリからデータをコピーし、GCP Storage にバックアップします。  
+※ 月一ペースで叩くことを想定したコードを想定しています。それ以外の場合は修正が必要です。  
+※ 指定されたディレクトリ内にサブディレクトリがあった場合、挙動が予期しないものになる可能性があります。
 
 ## 設定
+
 環境変数を必ず指定してください。
 
-- ローカル
-  - `LOCAL_PATH` バックアップしたいローカルディレクトリのパス
-- GCP関連
-  - `GOOGLE_APPLICATION_CREDENTIALS` GCPの、バックアップ先のプロジェクトに紐づけられたサービスアカウントのキー(jsonファイル)のパス
-  - `PROJECT_ID` バックアップ先のバケットを作成するプロジェクトのid
-- traQ関連
-  - `TRAQ_WEBHOOK_ID` traQ Webhook BotのID
-  - `TRAQ_WEBHOOK_SECRET` traQ Webhook Botのシークレット
+- ローカル関連
+  - `LOCAL_PATH`  
+    バックアップしたいローカルディレクトリのパス
+- GCP 関連
+  - `GOOGLE_APPLICATION_CREDENTIALS`  
+    GCP の、バックアップ先のプロジェクトに紐づけられたサービスアカウントのキー(json ファイル)のパス
+  - `PROJECT_ID`  
+    バックアップ先のバケットを作成するプロジェクトの id
+  - `BUCKET_NAME`  
+    バックアップ先のバケットの名前  
+    小文字・数字・記号が使えますが大文字が使えません  
+    { `BUCKET_NAME` + 今の月(mod `BUCKET_NUMBERS`) } が実際のバケット名になる
+  - `STORAGE_CLASS`  
+    データを格納するバケットのストレージクラス
+  - `DURATION`  
+    データを格納する期間 (日数指定)  
+    { `BUCKET_NUMBERS`で指定したバケットの数 × 一月の日数 } を超えないよう設定してください
+  - `BUCKET_NUMBERS`  
+    残しておきたいバケットの数 (今の月をこの数で割った余りでバケットを区分けするため、12の約数を推奨します)
+- traQ Webhook Bot 関連
+  - `TRAQ_WEBHOOK_ID`  
+    traQ Webhook Bot の ID
+  - `TRAQ_WEBHOOK_SECRET`  
+    traQ Webhook Bot のシークレット
+
+## ローカルで動かす場合
+
+シェルスクリプトで動かします。  
+このリポジトリをクローンしたディレクトリ直下に下のような内容で任意の sh ファイルを作り、コンソールから`sh xxx.sh`で実行してください
+
+```sh xxx.sh
+#!/bin/sh
+
+# 環境変数の設定
+export LOCAL_PATH={path}
+export GOOGLE_APPLICATION_CREDENTIALS={path}
+export PROJECT_ID={project-id}
+export BUCKET_NAME={name}
+export STORAGE_CLASS={strage-class}
+export DURATION={duration}
+export TRAQ_WEBHOOK_ID={webhook-id}
+export TRAQ_WEBHOOK_SECRET={secret}
+
+go run *.go
+```
