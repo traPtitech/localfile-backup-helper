@@ -2,7 +2,7 @@
 
 ローカルファイルのバックアップ用スクリプト  
 ローカルストレージ上の任意のフラットなディレクトリからデータをコピーし、GCP Storage にバックアップします。  
-※ 月一ペースで叩くことを想定したコードを想定しています。それ以外の場合は修正が必要です。  
+※ 月一ペースで叩くことを想定しています。それ以外の場合は修正が必要です。  
 ※ 指定されたディレクトリ内にサブディレクトリがあった場合、挙動が予期しないものになる可能性があります。
 
 ## 設定
@@ -11,7 +11,8 @@
 
 - ローカル関連
   - `LOCAL_PATH`  
-    バックアップしたいローカルディレクトリのパス
+    バックアップしたいローカルディレクトリのパス  
+    空白区切りで複数指定できます(シェルスクリプトの場合""で囲う必要があります)
 - GCP 関連
   - `GOOGLE_APPLICATION_CREDENTIALS`  
     GCP の、バックアップ先のプロジェクトに紐づけられたサービスアカウントのキー(json ファイル)のパス
@@ -20,7 +21,8 @@
   - `BUCKET_NAME`  
     バックアップ先のバケットの名前  
     小文字・数字・記号が使えますが大文字が使えません  
-    { `BUCKET_NAME` + 今の月(mod `BUCKET_NUMBERS`) } が実際のバケット名になる
+    { `BUCKET_NAME` + 今の月(mod `BUCKET_NUMBERS`) } が実際のバケット名になります  
+    空白区切りで複数指定できますが、`LOCAL_PATH`と同じ数だけ指定してください
   - `STORAGE_CLASS`  
     データを格納するバケットのストレージクラス
   - `DURATION`  
@@ -34,7 +36,7 @@
   - `TRAQ_WEBHOOK_SECRET`  
     traQ Webhook Bot のシークレット
 
-## ローカルで動かす場合
+## ソースコードをローカルで動かす場合
 
 シェルスクリプトで動かします。  
 このリポジトリをクローンしたディレクトリ直下に下のような内容で任意の sh ファイルを作り、コンソールから`sh xxx.sh`で実行してください
@@ -43,10 +45,10 @@
 #!/bin/sh
 
 # 環境変数の設定
-export LOCAL_PATH={path}
+export LOCAL_PATH="{path} {path2}"
 export GOOGLE_APPLICATION_CREDENTIALS={path}
 export PROJECT_ID={project-id}
-export BUCKET_NAME={name}
+export BUCKET_NAME="{name1} {name2}"
 export STORAGE_CLASS={strage-class}
 export DURATION={duration}
 export BUCKET_NUMBERS={bucket-numbers}
