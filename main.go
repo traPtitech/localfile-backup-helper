@@ -11,7 +11,6 @@ func main() {
 	localPaths, gcpKey, projectId, bucketNames, storageClass, duration, bucketNum, webhookId, webhookSecret := EnvVarLoad()
 
 	log.Printf("Backin' up files from %q to \"%s\" on gcp Storage...", localPaths, projectId)
-	startTime := time.Now()
 
 	// クライアントを建てる
 	client, err := CreateClient(gcpKey, projectId)
@@ -22,6 +21,8 @@ func main() {
 
 	// localPathesの長さ(= bucketNamesの長さ)だけ処理を繰り返す
 	for i := range localPaths {
+		startTime := time.Now()
+
 		// bucketNamesのi番目 + 月(mod n) をバケット名とし、bucketNamesのi番目に再代入
 		bucketNames[i] = fmt.Sprintf("%s-%d", bucketNames[i], startTime.Month()%time.Month(bucketNum))
 
