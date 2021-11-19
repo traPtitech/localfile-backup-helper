@@ -28,8 +28,9 @@ func CreateBucket(client storage.Client, projectId string, storageClass string, 
 	// バケットとメタデータの設定
 	bucket := client.Bucket(bucketName)
 	bucketAttrs := &storage.BucketAttrs{
-		StorageClass: storageClass,
-		Location:     "asia-northeast1",
+		StorageClass:      storageClass,
+		Location:          "asia-northeast1",
+		VersioningEnabled: true,
 		// 生成から90日でバケットを削除
 		Lifecycle: storage.Lifecycle{Rules: []storage.LifecycleRule{
 			{

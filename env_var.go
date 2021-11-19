@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func EnvVarLoad() (string, string, string, string, string, int64, int, string, string) {
+func EnvVarLoad() (string, string, string, string, string, int64, string, string) {
 	// 環境変数を取得
 	localPath := getEnv("LOCAL_PATH")
 	gcpKey := getEnv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -15,12 +15,11 @@ func EnvVarLoad() (string, string, string, string, string, int64, int, string, s
 	bucketName := getEnv("BUCKET_NAME")
 	storageClass := getEnv("STORAGE_CLASS")
 	duration, _ := strconv.ParseInt(getEnv("DURATION"), 0, 64)
-	bucketNum, _ := strconv.Atoi(getEnv("BUCKET_NUMBERS"))
 	webhookId := getEnv("TRAQ_WEBHOOK_ID")
 	webhookSecret := getEnv("TRAQ_WEBHOOK_SECRET")
 
 	log.Print("Env-vars successfully loaded")
-	return localPath, gcpKey, projectId, bucketName, storageClass, duration, bucketNum, webhookId, webhookSecret
+	return localPath, gcpKey, projectId, bucketName, storageClass, duration, webhookId, webhookSecret
 }
 
 func getEnv(name string) string {
