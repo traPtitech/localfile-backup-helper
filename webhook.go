@@ -14,26 +14,26 @@ import (
 
 const timeFormat = "2006/01/02 15:04:05"
 
-func CreateMes(localPath string, bucketName string, startTime time.Time, buduration time.Duration, objectNum int, errs_num int) string {
+func createMes(localPath string, bucketName string, startTime time.Time, buDuration time.Duration, objectNum int, errs_num int) string {
 	// traQに流すテキストメッセージを生成
 	mes := fmt.Sprintf(
 		`### ローカルファイルのバックアップが保存されました
-	バックアップ元ディレクトリ: %s 
+	バックアップ元ディレクトリ: %s
 	生成/上書きされたバケット名: %s
 	バックアップ開始時刻: %s
 	バックアップ所要時間: %f 分
 	オブジェクト数: %d
 	エラー数: %d`,
-		localPath, bucketName, startTime.Format(timeFormat), buduration.Minutes(), objectNum, errs_num)
+		localPath, bucketName, startTime.Format(timeFormat), buDuration.Minutes(), objectNum, errs_num)
 
 	log.Print("Webhook message generated")
 	return mes
 }
 
-func SendWebhook(mes string, webhookId string, webhookSecret string) error {
+func sendWebhook(mes string, webhookId string, webhookSecret string) error {
 	// リクエスト先url生成とメッセージの暗号化
 	webhookUrl := "https://q.trap.jp/api/v3/webhooks/" + webhookId
-	sig := calcHMACSHA1(mes, webhookSecret)
+	sig := calcHash(mes, webhookSecret)
 
 	// リクエスト作成とヘッダーの設定
 	req, err := http.NewRequest("POST", webhookUrl, strings.NewReader(mes))
@@ -50,6 +50,9 @@ func SendWebhook(mes string, webhookId string, webhookSecret string) error {
 	}
 
 	// レスポンスの内容を確認
+	if res.StatusCode >= 300 {
+		return fmt.Errorf("status code: %d", res.StatusCode)
+	}
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
@@ -60,7 +63,7 @@ func SendWebhook(mes string, webhookId string, webhookSecret string) error {
 	return err
 }
 
-func calcHMACSHA1(mes string, webhookSecret string) string {
+func calcHash(mes string, webhookSecret string) string {
 	// メッセージをHMAC-SHA1でハッシュ化(Bot Consoleのコピペ)
 	mac := hmac.New(sha1.New, []byte(webhookSecret))
 	_, _ = mac.Write([]byte(mes))

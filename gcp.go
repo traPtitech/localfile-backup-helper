@@ -12,7 +12,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func CreateClient(gcpKey string, projectId string) (*storage.Client, error) {
+func createClient(gcpKey string, projectId string) (*storage.Client, error) {
 	// jsonで渡された鍵のサービスアカウントに紐づけられたクライアントを建てる
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(gcpKey))
@@ -24,7 +24,7 @@ func CreateClient(gcpKey string, projectId string) (*storage.Client, error) {
 	return client, err
 }
 
-func CreateBucket(client storage.Client, projectId string, storageClass string, duration int64, bucketName string) (*storage.BucketHandle, error) {
+func createBucket(client storage.Client, projectId string, storageClass string, duration int64, bucketName string) (*storage.BucketHandle, error) {
 	// バケットとメタデータの設定
 	bucket := client.Bucket(bucketName)
 	bucketAttrs := &storage.BucketAttrs{
@@ -57,7 +57,7 @@ func CreateBucket(client storage.Client, projectId string, storageClass string, 
 	return bucket, err
 }
 
-func CopyDirectory(bucket storage.BucketHandle, localPath string) (int, error, []error) {
+func copyDirectory(bucket storage.BucketHandle, localPath string) (int, error, []error) {
 	var errs []error
 	objectNum := 0
 
