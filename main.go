@@ -8,7 +8,7 @@ import (
 
 func main() {
 	// 環境変数を取得
-	localPath, gcpKey, projectId, bucketName, storageClass, duration, bucketNum, webhookId, webhookSecret := EnvVarLoad()
+	localPath, gcpKey, projectId, bucketName, storageClass, duration, webhookId, webhookSecret := EnvVarLoad()
 
 	log.Printf("Backin' up files from \"%s\" to \"%s\" on gcp Storage...", localPath, projectId)
 	startTime := time.Now()
@@ -19,9 +19,6 @@ func main() {
 		panic(fmt.Sprintf("Error: failed to load create client - %s", err))
 	}
 	defer client.Close()
-
-	// bucketName + 月(mod n) をバケット名とし、bucketNameに再代入
-	bucketName = fmt.Sprintf("%s-%d", bucketName, startTime.Month()%time.Month(bucketNum))
 
 	// バケットを作成
 	bucket, err := CreateBucket(*client, projectId, storageClass, duration, bucketName)

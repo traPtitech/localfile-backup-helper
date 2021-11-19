@@ -19,15 +19,11 @@
     バックアップ先のバケットを作成するプロジェクトの id
   - `BUCKET_NAME`  
     バックアップ先のバケットの名前  
-    小文字・数字・記号が使えますが大文字が使えません  
-    { `BUCKET_NAME` + 今の月(mod `BUCKET_NUMBERS`) } が実際のバケット名になる
+    小文字・数字・記号が使えますが大文字が使えません
   - `STORAGE_CLASS`  
     データを格納するバケットのストレージクラス
   - `DURATION`  
-    データを格納する期間 (日数指定)  
-    { `BUCKET_NUMBERS`で指定したバケットの数 × 一月の日数 } を超えないよう設定してください
-  - `BUCKET_NUMBERS`  
-    残しておきたいバケットの数 (今の月をこの数で割った余りでバケットを区分けするため、12の約数を推奨します)
+    単一バージョンを保存する期間 (日数指定)  
 - traQ Webhook Bot 関連
   - `TRAQ_WEBHOOK_ID`  
     traQ Webhook Bot の ID
@@ -47,7 +43,7 @@ export LOCAL_PATH={path}
 export GOOGLE_APPLICATION_CREDENTIALS={path}
 export PROJECT_ID={project-id}
 export BUCKET_NAME={name}
-export STORAGE_CLASS={strage-class}
+export STORAGE_CLASS={storage-class}
 export DURATION={duration}
 export BUCKET_NUMBERS={bucket-numbers}
 export TRAQ_WEBHOOK_ID={webhook-id}
