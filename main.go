@@ -34,7 +34,7 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Error: failed to copy directory - %s", err))
 	}
-	log.Printf("%d file(s) successfully backed up, %d error(s) occured", objectNum, len(errs))
+	log.Printf("%d file(s) successfully backed up, %d error(s) occurred", objectNum, len(errs))
 	if len(errs) != 0 {
 		for i, err := range errs {
 			log.Printf("Error %d: %s", i, err)
