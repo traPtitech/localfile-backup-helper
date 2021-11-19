@@ -7,27 +7,27 @@ import (
 	"strconv"
 )
 
-func EnvVarLoad() (string, string, string, string, string, int64, string, string) {
+func loadEnv() (string, string, string, string, string, int64, string, string) {
 	// 環境変数を取得
 	localPath := getEnv("LOCAL_PATH")
 	gcpKey := getEnv("GOOGLE_APPLICATION_CREDENTIALS")
-	projectId := getEnv("PROJECT_ID")
+	projectID := getEnv("PROJECT_ID")
 	bucketName := getEnv("BUCKET_NAME")
 	storageClass := getEnv("STORAGE_CLASS")
 	duration, _ := strconv.ParseInt(getEnv("DURATION"), 0, 64)
-	webhookId := getEnv("TRAQ_WEBHOOK_ID")
+	webhookID := getEnv("TRAQ_WEBHOOK_ID")
 	webhookSecret := getEnv("TRAQ_WEBHOOK_SECRET")
 
 	log.Print("Env-vars successfully loaded")
-	return localPath, gcpKey, projectId, bucketName, storageClass, duration, webhookId, webhookSecret
+	return localPath, gcpKey, projectID, bucketName, storageClass, duration, webhookID, webhookSecret
 }
 
 func getEnv(name string) string {
 	// 指定された名前の環境変数を取得、空ならばエラーを吐いて終了
-	loadedVar := os.Getenv(name)
-	if loadedVar == "" {
+	loaded := os.Getenv(name)
+	if loaded == "" {
 		panic(fmt.Sprintf("Error: env-var \"%s\" empty", name))
 	}
 
-	return loadedVar
+	return loaded
 }

@@ -8,26 +8,26 @@ import (
 
 func main() {
 	// 環境変数を取得
-	localPath, gcpKey, projectId, bucketName, storageClass, duration, webhookId, webhookSecret := EnvVarLoad()
+	localPath, gcpKey, projectID, bucketName, storageClass, duration, webhookID, webhookSecret := loadEnv()
 
-	log.Printf("Backin' up files from \"%s\" to \"%s\" on gcp Storage...", localPath, projectId)
+	log.Printf("Backin' up files from \"%s\" to \"%s\" on gcp Storage...", localPath, projectID)
 	startTime := time.Now()
 
 	// クライアントを建てる
-	client, err := CreateClient(gcpKey, projectId)
+	client, err := createClient(gcpKey, projectID)
 	if err != nil {
 		panic(fmt.Sprintf("Error: failed to load create client - %s", err))
 	}
 	defer client.Close()
 
 	// バケットを作成
-	bucket, err := CreateBucket(*client, projectId, storageClass, duration, bucketName)
+	bucket, err := createBucket(*client, projectID, storageClass, duration, bucketName)
 	if err != nil {
 		panic(fmt.Sprintf("Error: failed to create bucket - %s", err))
 	}
 
 	// バケットへディレクトリをコピー
-	objectNum, err, errs := CopyDirectory(*bucket, localPath)
+	objectNum, err, errs := copyDirectory(*bucket, localPath)
 	if err != nil {
 		panic(fmt.Sprintf("Error: failed to copy directory - %s", err))
 	}
@@ -40,11 +40,11 @@ func main() {
 
 	// Webhook用のメッセージを作成
 	endTime := time.Now()
-	buduration := endTime.Sub(startTime)
-	mes := CreateMes(localPath, bucketName, startTime, buduration, objectNum, len(errs))
+	buDuration := endTime.Sub(startTime)
+	mes := createMes(localPath, bucketName, startTime, buDuration, objectNum, len(errs))
 
 	// WebhookをtraQ Webhook Botに送信
-	err = SendWebhook(mes, webhookId, webhookSecret)
+	err = sendWebhook(mes, webhookID, webhookSecret)
 	if err != nil {
 		panic(fmt.Sprintf("Error: failed to send webhook - %s", err))
 	}
