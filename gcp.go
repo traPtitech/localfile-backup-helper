@@ -80,7 +80,7 @@ func copyDirectory(bucket storage.BucketHandle, localPath string) (int, error, [
 
 	// 指定のディレクトリのファイルを1つずつストレージにコピー
 	for _, filePath := range filePaths {
-		err = copyFile(bucket, localPath+"/"+filePath, filePath)
+		err = copyFile(bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
 		if err != nil {
 			errs = append(errs, err)
 		} else {
