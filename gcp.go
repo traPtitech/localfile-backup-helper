@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"io"
+	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"cloud.google.com/go/storage"
@@ -62,14 +64,23 @@ func copyDirectory(bucket storage.BucketHandle, localPath string) (int, error, [
 	objectNum := 0
 
 	// ローカルのディレクトリ構造を読み込み
-	files, err := os.ReadDir(localPath)
+	filePaths := []string{}
+	err := filepath.Walk(localPath, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			filePaths = append(filePaths, path)
+		}
+		return nil
+	})
 	if err != nil {
-		return 0, err, errs
+		return 0, err, nil
 	}
 
 	// 指定のディレクトリのファイルを1つずつストレージにコピー
-	for _, file := range files {
-		err = copyFile(bucket, localPath+"/"+file.Name(), file.Name())
+	for _, filePath := range filePaths {
+		err = copyFile(bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
 		if err != nil {
 			errs = append(errs, err)
 		} else {
@@ -80,7 +91,7 @@ func copyDirectory(bucket storage.BucketHandle, localPath string) (int, error, [
 	return objectNum, nil, errs
 }
 
-func copyFile(bucket storage.BucketHandle, filePath string, fileName string) error {
+func copyFile(bucket storage.BucketHandle, filePath string, objectName string) error {
 	// ローカルのファイルを開く
 	original, err := os.Open(filePath)
 	if err != nil {
@@ -90,7 +101,7 @@ func copyFile(bucket storage.BucketHandle, filePath string, fileName string) err
 
 	// 書き込むためのWriterを作成
 	ctx := context.Background()
-	writer := bucket.Object(fileName).NewWriter(ctx)
+	writer := bucket.Object(objectName).NewWriter(ctx)
 	snappyWriter := snappy.NewBufferedWriter(writer)
 	defer writer.Close()
 	defer snappyWriter.Close()
