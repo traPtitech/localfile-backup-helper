@@ -88,17 +88,17 @@ func copyDirectory(ctx context.Context, bucket storage.BucketHandle, localPath s
 		wg.Add(1)
 
 		if err := sem.Acquire(ctx, 1); err != nil {
-			errMutex.Lock()
 			errs = append(errs, err)
-			errMutex.Unlock()
 		}
 
 		go func(filePath string) {
 			defer sem.Release(1)
 
-			err = copyFile(bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
+			err := copyFile(ctx, bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
 			if err != nil {
+				errMutex.Lock()
 				errs = append(errs, err)
+				errMutex.Unlock()
 			} else {
 				objectNum++
 			}
@@ -111,7 +111,7 @@ func copyDirectory(ctx context.Context, bucket storage.BucketHandle, localPath s
 	return objectNum, nil, errs
 }
 
-func copyFile(bucket storage.BucketHandle, filePath string, objectName string) error {
+func copyFile(ctx context.Context, bucket storage.BucketHandle, filePath string, objectName string) error {
 	// ローカルのファイルを開く
 	original, err := os.Open(filePath)
 	if err != nil {
@@ -120,7 +120,6 @@ func copyFile(bucket storage.BucketHandle, filePath string, objectName string) e
 	defer original.Close()
 
 	// 書き込むためのWriterを作成
-	ctx := context.Background()
 	writer := bucket.Object(objectName).NewWriter(ctx)
 	snappyWriter := snappy.NewBufferedWriter(writer)
 	defer writer.Close()
