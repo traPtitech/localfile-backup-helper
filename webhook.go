@@ -31,6 +31,11 @@ func createMes(localPath string, bucketName string, startTime time.Time, buDurat
 }
 
 func sendWebhook(mes string, webhookId string, webhookSecret string) error {
+	if webhookId == "" || webhookSecret == "" {
+		log.Printf("As webhook ID and secret being empty, webhook message will not be sent.\nHere is the message to be sent:\n%s", mes)
+		return nil
+	}
+
 	// リクエスト先url生成とメッセージの暗号化
 	webhookUrl := "https://q.trap.jp/api/v3/webhooks/" + webhookId
 	sig := calcHash(mes, webhookSecret)
