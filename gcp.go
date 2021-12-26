@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"cloud.google.com/go/storage"
 	"github.com/golang/snappy"
@@ -61,9 +62,6 @@ func createBucket(client storage.Client, projectId string, storageClass string, 
 }
 
 func copyDirectory(bucket storage.BucketHandle, localPath string, parallelNum int64) (int, error, []error) {
-	sem := semaphore.NewWeighted(parallelNum) // goroutine実行数制御のためのセマフォ
-	var errs []error
-	objectNum := 0
 
 	// ローカルのディレクトリ構造を読み込み
 	filePaths := []string{}
@@ -80,13 +78,23 @@ func copyDirectory(bucket storage.BucketHandle, localPath string, parallelNum in
 		return 0, err, nil
 	}
 
+	sem := semaphore.NewWeighted(parallelNum) // goroutine実行数制御のためのセマフォ
+	errs := []error{}
+	errMutex := sync.Mutex{}
+	objectNum := 0
+	wg := sync.WaitGroup{}
+
 	// 指定のディレクトリのファイルを並列処理で1つずつストレージにコピー(セマフォで一度に10個までに制限)
 	for _, filePath := range filePaths {
+		wg.Add(1)
+
+		if err := sem.Acquire(context.Background(), 1); err != nil {
+			errMutex.Lock()
+			errs = append(errs, err)
+			errMutex.Unlock()
+		}
+
 		go func(filePath string) {
-			if err := sem.Acquire(context.Background(), 1); err != nil {
-				errs = append(errs, err)
-				return
-			}
 			defer sem.Release(1)
 
 			err = copyFile(bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
@@ -95,9 +103,12 @@ func copyDirectory(bucket storage.BucketHandle, localPath string, parallelNum in
 			} else {
 				objectNum++
 			}
+
+			wg.Done()
 		}(filePath)
 	}
 
+	wg.Wait()
 	return objectNum, nil, errs
 }
 
