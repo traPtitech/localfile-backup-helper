@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -27,7 +28,7 @@ func main() {
 	}
 
 	// バケットへディレクトリをコピー
-	objectNum, err, errs := copyDirectory(*bucket, localPath, parallelNum)
+	objectNum, err, errs := copyDirectory(context.Background(), *bucket, localPath, parallelNum)
 	if err != nil {
 		panic(fmt.Sprintf("Error: failed to copy directory - %s", err))
 	}

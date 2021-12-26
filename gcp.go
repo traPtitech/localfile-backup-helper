@@ -61,8 +61,7 @@ func createBucket(client storage.Client, projectId string, storageClass string, 
 	return bucket, err
 }
 
-func copyDirectory(bucket storage.BucketHandle, localPath string, parallelNum int64) (int, error, []error) {
-
+func copyDirectory(ctx context.Context, bucket storage.BucketHandle, localPath string, parallelNum int64) (int, error, []error) {
 	// ローカルのディレクトリ構造を読み込み
 	filePaths := []string{}
 	err := filepath.Walk(localPath, func(path string, info fs.FileInfo, err error) error {
@@ -88,7 +87,7 @@ func copyDirectory(bucket storage.BucketHandle, localPath string, parallelNum in
 	for _, filePath := range filePaths {
 		wg.Add(1)
 
-		if err := sem.Acquire(context.Background(), 1); err != nil {
+		if err := sem.Acquire(ctx, 1); err != nil {
 			errMutex.Lock()
 			errs = append(errs, err)
 			errMutex.Unlock()
