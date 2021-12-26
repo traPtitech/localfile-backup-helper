@@ -11,8 +11,13 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/golang/snappy"
+	"golang.org/x/sync/semaphore"
 	"google.golang.org/api/option"
 )
+
+const routineNum = 10 // 一度にファイルをコピーするgoroutineを実行できる数
+
+var sem = semaphore.NewWeighted(routineNum) // goroutine実行数制御のためのセマフォ
 
 func createClient(gcpKey string, projectId string) (*storage.Client, error) {
 	// jsonで渡された鍵のサービスアカウントに紐づけられたクライアントを建てる
@@ -78,14 +83,22 @@ func copyDirectory(bucket storage.BucketHandle, localPath string) (int, error, [
 		return 0, err, nil
 	}
 
-	// 指定のディレクトリのファイルを1つずつストレージにコピー
+	// 指定のディレクトリのファイルを並列処理で1つずつストレージにコピー(セマフォで一度に10個までに制限)
 	for _, filePath := range filePaths {
-		err = copyFile(bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
-		if err != nil {
-			errs = append(errs, err)
-		} else {
-			objectNum++
-		}
+		go func(filePath string) {
+			if err := sem.Acquire(context.Background(), 1); err != nil {
+				errs = append(errs, err)
+				return
+			}
+			defer sem.Release(1)
+
+			err = copyFile(bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
+			if err != nil {
+				errs = append(errs, err)
+			} else {
+				objectNum++
+			}
+		}(filePath)
 	}
 
 	return objectNum, nil, errs
