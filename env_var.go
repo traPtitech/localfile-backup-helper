@@ -36,9 +36,9 @@ func getWebhookEnv(idName string, secName string) (string, string) {
 	id := os.Getenv(idName)
 	sec := os.Getenv(secName)
 	if id == "" && sec == "" {
-		log.Printf("Warning: env-var \"%s\", \"%s\" empty", idName, secName)
+		log.Printf("Warning: env-var \"%s\" and \"%s\" empty", idName, secName)
 	} else if id == "" || sec == "" {
-		panic(fmt.Sprintf("Error: env-var \"%s\", \"%s\" empty", idName, secName))
+		panic(fmt.Sprintf("Error: env-var \"%s\" or \"%s\" empty", idName, secName))
 	}
 
 	return id, sec
