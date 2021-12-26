@@ -8,7 +8,7 @@ import (
 
 func main() {
 	// 環境変数を取得
-	localPath, gcpKey, projectID, bucketName, storageClass, duration, webhookID, webhookSecret := loadEnv()
+	localPath, gcpKey, projectID, bucketName, storageClass, duration, parallelNum, webhookID, webhookSecret := loadEnv()
 
 	log.Printf("Backin' up files from \"%s\" to \"%s\" on gcp Storage...", localPath, projectID)
 	startTime := time.Now()
@@ -27,7 +27,7 @@ func main() {
 	}
 
 	// バケットへディレクトリをコピー
-	objectNum, err, errs := copyDirectory(*bucket, localPath)
+	objectNum, err, errs := copyDirectory(*bucket, localPath, parallelNum)
 	if err != nil {
 		panic(fmt.Sprintf("Error: failed to copy directory - %s", err))
 	}

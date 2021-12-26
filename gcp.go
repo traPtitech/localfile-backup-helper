@@ -15,10 +15,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-const routineNum = 10 // 一度にファイルをコピーするgoroutineを実行できる数
-
-var sem = semaphore.NewWeighted(routineNum) // goroutine実行数制御のためのセマフォ
-
 func createClient(gcpKey string, projectId string) (*storage.Client, error) {
 	// jsonで渡された鍵のサービスアカウントに紐づけられたクライアントを建てる
 	ctx := context.Background()
@@ -64,7 +60,8 @@ func createBucket(client storage.Client, projectId string, storageClass string, 
 	return bucket, err
 }
 
-func copyDirectory(bucket storage.BucketHandle, localPath string) (int, error, []error) {
+func copyDirectory(bucket storage.BucketHandle, localPath string, parallelNum int64) (int, error, []error) {
+	sem := semaphore.NewWeighted(parallelNum) // goroutine実行数制御のためのセマフォ
 	var errs []error
 	objectNum := 0
 
