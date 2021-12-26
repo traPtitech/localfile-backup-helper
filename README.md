@@ -18,12 +18,14 @@
   - `PROJECT_ID`  
     バックアップ先のバケットを作成するプロジェクトの id
   - `BUCKET_NAME`  
-    バックアップ先のバケットの名前  
+    バックアップ先のバケットの名前
     小文字・数字・記号が使えますが大文字が使えません
   - `STORAGE_CLASS`  
     データを格納するバケットのストレージクラス
   - `DURATION`  
-    単一バージョンを保存する期間 (日数指定)  
+    単一バージョンを保存する期間 (日数指定)
+  - `PARALLEL_NUM`  
+    同時にバックアップするファイル数
 - traQ Webhook Bot 関連
   - `TRAQ_WEBHOOK_ID`  
     traQ Webhook Bot の ID
@@ -45,7 +47,8 @@ export PROJECT_ID={project-id}
 export BUCKET_NAME={name}
 export STORAGE_CLASS={storage-class}
 export DURATION={duration}
-export TRAQ_WEBHOOK_ID={webhook-id}
+export PARALLEL_NUM={number}
+export TRAQ_WEBHOOK_ID={id}
 export TRAQ_WEBHOOK_SECRET={secret}
 
 go run *.go
