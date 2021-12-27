@@ -89,12 +89,11 @@ func copyDirectory(ctx context.Context, bucket storage.BucketHandle, localPath s
 
 	// 指定のディレクトリのファイルを並列処理で1つずつストレージにコピー
 	for _, filePath := range filePaths {
-		wg.Add(1)
-
 		if err := sem.Acquire(ctx, 1); err != nil {
 			result.appendError(err)
 			continue
 		}
+		wg.Add(1)
 
 		go func(filePath string) {
 			defer wg.Done()
