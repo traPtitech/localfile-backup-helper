@@ -8,9 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"cloud.google.com/go/storage"
 	"github.com/golang/snappy"
+	"golang.org/x/sync/semaphore"
 	"google.golang.org/api/option"
 )
 
@@ -59,10 +61,7 @@ func createBucket(client storage.Client, projectId string, storageClass string, 
 	return bucket, err
 }
 
-func copyDirectory(bucket storage.BucketHandle, localPath string) (int, error, []error) {
-	var errs []error
-	objectNum := 0
-
+func copyDirectory(ctx context.Context, bucket storage.BucketHandle, localPath string, parallelNum int64) (int, error, []error) {
 	// ローカルのディレクトリ構造を読み込み
 	filePaths := []string{}
 	err := filepath.Walk(localPath, func(path string, info fs.FileInfo, err error) error {
@@ -78,20 +77,42 @@ func copyDirectory(bucket storage.BucketHandle, localPath string) (int, error, [
 		return 0, err, nil
 	}
 
-	// 指定のディレクトリのファイルを1つずつストレージにコピー
+	// goroutine実行数制御のためのセマフォ
+	sem := semaphore.NewWeighted(parallelNum)
+	// アップロード結果格納用変数(並列処理のためMutexを埋め込み)
+	result := Result{
+		errs:      []error{},
+		objectNum: 0,
+	}
+	// 完了待ち用WaitGroup
+	wg := sync.WaitGroup{}
+
+	// 指定のディレクトリのファイルを並列処理で1つずつストレージにコピー
 	for _, filePath := range filePaths {
-		err = copyFile(bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
-		if err != nil {
-			errs = append(errs, err)
-		} else {
-			objectNum++
+		if err := sem.Acquire(ctx, 1); err != nil {
+			result.appendError(err)
+			continue
 		}
+		wg.Add(1)
+
+		go func(filePath string) {
+			defer wg.Done()
+			defer sem.Release(1)
+
+			err := copyFile(ctx, bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
+			if err != nil {
+				result.appendError(err)
+			} else {
+				result.incrementObjectNum()
+			}
+		}(filePath)
 	}
 
-	return objectNum, nil, errs
+	wg.Wait()
+	return result.objectNum, nil, result.errs
 }
 
-func copyFile(bucket storage.BucketHandle, filePath string, objectName string) error {
+func copyFile(ctx context.Context, bucket storage.BucketHandle, filePath string, objectName string) error {
 	// ローカルのファイルを開く
 	original, err := os.Open(filePath)
 	if err != nil {
@@ -100,7 +121,6 @@ func copyFile(bucket storage.BucketHandle, filePath string, objectName string) e
 	defer original.Close()
 
 	// 書き込むためのWriterを作成
-	ctx := context.Background()
 	writer := bucket.Object(objectName).NewWriter(ctx)
 	snappyWriter := snappy.NewBufferedWriter(writer)
 	defer writer.Close()

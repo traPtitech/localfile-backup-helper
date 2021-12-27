@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func loadEnv() (string, string, string, string, string, int64, string, string) {
+func loadEnv() (string, string, string, string, string, int64, int64, string, string) {
 	// 環境変数を取得
 	localPath := getEnv("LOCAL_PATH")
 	gcpKey := getEnv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -15,10 +15,11 @@ func loadEnv() (string, string, string, string, string, int64, string, string) {
 	bucketName := getEnv("BUCKET_NAME")
 	storageClass := getEnv("STORAGE_CLASS")
 	duration, _ := strconv.ParseInt(getEnv("DURATION"), 0, 64)
+	parallelNum, _ := strconv.ParseInt(getEnv("PARALLEL_NUM"), 0, 64)
 	webhookID, webhookSecret := getWebhookEnv("TRAQ_WEBHOOK_ID", "TRAQ_WEBHOOK_SECRET")
 
 	log.Print("Env-vars successfully loaded")
-	return localPath, gcpKey, projectID, bucketName, storageClass, duration, webhookID, webhookSecret
+	return localPath, gcpKey, projectID, bucketName, storageClass, duration, parallelNum, webhookID, webhookSecret
 }
 
 func getEnv(name string) string {
