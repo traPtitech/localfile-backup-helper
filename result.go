@@ -14,7 +14,7 @@ func (r *Result) appendError(err error) {
 	r.errs = append(r.errs, err)
 }
 
-func (r *Result) addObjectNum() {
+func (r *Result) incrementObjectNum() {
 	r.Lock()
 	defer r.Unlock()
 	r.objectNum++

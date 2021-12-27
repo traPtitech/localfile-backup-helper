@@ -103,7 +103,7 @@ func copyDirectory(ctx context.Context, bucket storage.BucketHandle, localPath s
 			if err != nil {
 				result.appendError(err)
 			} else {
-				result.addObjectNum()
+				result.incrementObjectNum()
 			}
 		}(filePath)
 	}
