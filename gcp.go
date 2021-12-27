@@ -80,25 +80,20 @@ func copyDirectory(ctx context.Context, bucket storage.BucketHandle, localPath s
 	// goroutine実行数制御のためのセマフォ
 	sem := semaphore.NewWeighted(parallelNum)
 	// アップロード結果格納用変数(並列処理のためMutexを埋め込み)
-	result := struct {
-		errs      []error
-		objectNum int
-		sync.Mutex
-	}{
+	result := Result{
 		errs:      []error{},
 		objectNum: 0,
 	}
 	// 完了待ち用WaitGroup
 	wg := sync.WaitGroup{}
 
-	// 指定のディレクトリのファイルを並列処理で1つずつストレージにコピー(セマフォで一度に10個までに制限)
+	// 指定のディレクトリのファイルを並列処理で1つずつストレージにコピー
 	for _, filePath := range filePaths {
 		wg.Add(1)
 
 		if err := sem.Acquire(ctx, 1); err != nil {
-			result.Lock()
-			result.errs = append(result.errs, err)
-			result.Unlock()
+			result.appendError(err)
+			continue
 		}
 
 		go func(filePath string) {
@@ -106,12 +101,10 @@ func copyDirectory(ctx context.Context, bucket storage.BucketHandle, localPath s
 			defer sem.Release(1)
 
 			err := copyFile(ctx, bucket, filePath, strings.TrimPrefix(filePath, localPath+"/"))
-			result.Lock()
-			defer result.Unlock()
 			if err != nil {
-				result.errs = append(result.errs, err)
+				result.appendError(err)
 			} else {
-				result.objectNum++
+				result.addObjectNum()
 			}
 		}(filePath)
 	}
